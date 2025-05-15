@@ -1,10 +1,10 @@
 //Database Types
-using Microsoft.Data.SqlClient;
+using Npgsql;
 using Dapper;
 public class AccountResource {
     
-    SqlConnection postgresClient;
-    AccountResource(PostgresClientProvider postgresClientProvider){
+    NpgsqlConnection postgresClient;
+    public AccountResource(PostgresClientProvider postgresClientProvider){
         this.postgresClient = postgresClientProvider.getPostgresClient();
     }
 

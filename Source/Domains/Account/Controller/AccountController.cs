@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 public class AccountController : ControllerBase
 {
     private readonly AccountResource accountResource;
-    AccountController(AccountResource accountResource)
+    public AccountController(AccountResource accountResource)
     {
         this.accountResource = accountResource;
     }

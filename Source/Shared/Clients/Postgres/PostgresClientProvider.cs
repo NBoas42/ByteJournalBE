@@ -1,16 +1,20 @@
-using Microsoft.Data.SqlClient;
+using Npgsql;
 public class PostgresClientProvider {
-    private  SqlConnection postgresClient;
-    PostgresClientProvider(AppConfig config){
+    private  NpgsqlConnection postgresClient;
+    public PostgresClientProvider(AppConfig config){
         string databaseURL = config.Get("databaseURL");
         string port = config.Get("port");
         string databaseName = config.Get("databaseName");
         string userId = config.Get("userId");
         string password =config.Get("password");
-        this.postgresClient = new SqlConnection($"Server={databaseURL};Database={databaseName};User Id={userId};Password={password};");
+        string connString = $"Host={databaseURL};Port={port};Database={databaseName};Username={userId};Password={password};";
+
+
+        Console.WriteLine($"Connecting to Postgres at {connString}");
+        this.postgresClient = new NpgsqlConnection(connString);
     }
 
-    public SqlConnection getPostgresClient () {
+    public NpgsqlConnection getPostgresClient () {
         return this.postgresClient;
     }
     

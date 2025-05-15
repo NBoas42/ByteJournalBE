@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // Register Shared Classes
-builder.Services.AddSingleton(new AppConfig("../app.config"));
+builder.Services.AddSingleton(new AppConfig("./source/local.config"));
 builder.Services.AddSingleton<PostgresClientProvider>();
 
 // Register Account Domain

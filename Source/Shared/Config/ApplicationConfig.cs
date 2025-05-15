@@ -24,7 +24,7 @@ public class AppConfig{
 
     public string Get(string key)
     {
-        return settings.TryGetValue(key, out var value) ? value : null;
+        return settings.TryGetValue(key, out var value) ? value : "";
     }
 
     public int GetInt(string key)
