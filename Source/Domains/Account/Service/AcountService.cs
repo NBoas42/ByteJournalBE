@@ -1,6 +1,3 @@
-//Database Types
-using Npgsql;
-using Dapper;
 public class AccountService {
 
    private readonly AccountResource _AccountResource;
@@ -11,19 +8,18 @@ public class AccountService {
 
     async public Task<Account> CreateAccount(Account account) {
         // Add Password Encryption here
-
         Account result = await this._AccountResource.CreateAccount(account);
-
         return result;
     }
 
-    async public Task<Account> UpdateAccount(Account account) {
-        Account result = await this._AccountResource.UpdateAccount(account);
+    async public Task<Account> UpdateAccount(Guid accountId, AccountUpdateDTO accountToUpdate) {
+        // Add Password Encryption here
+        Account result = await this._AccountResource.UpdateAccount(accountId,accountToUpdate);
         return result;
     }
 
-    async public Task<Account[]> SearchAccounts(Account accountQuery) {
-        Account[] result = await this._AccountResource.SearchAccounts(accountQuery);
+    async public Task<Account[]> SearchAccounts(Account AccountQuery) {
+        Account[] result = await this._AccountResource.SearchAccounts(AccountQuery);
         return result;
     }
 

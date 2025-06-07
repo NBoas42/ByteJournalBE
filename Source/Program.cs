@@ -5,6 +5,7 @@ builder.Services.AddSingleton(new AppConfig("./Source/Shared/Config/local.config
 builder.Services.AddSingleton<PostgresClientProvider>();
 
 // Register Account Domain
+builder.Services.AddTransient<AccountService>();
 builder.Services.AddTransient<AccountResource>();
 
 builder.Services.AddControllers();

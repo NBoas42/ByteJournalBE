@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/account")]
-public class AccountController : ControllerBase {
-
+public class AccountController : Controller {
     private readonly AccountService _AccountService;
 
     public AccountController(AccountService accountService) {
@@ -12,40 +11,61 @@ public class AccountController : ControllerBase {
 
     [HttpPost()]
     public async Task<IActionResult> CreateAccount([FromBody] Account account) {
-        Account result = await this._AccountService.CreateAccount(account);
-
-        return Ok(result);
+        try {
+            Account result = await this._AccountService.CreateAccount(account);
+            return StatusCode(200, result);
+        }
+        catch (HttpException exception) {
+            int statusCode = exception.StatusCode;
+            return StatusCode(statusCode, exception.Message);
+        }
     }
 
-
-    [HttpPut()]
-    public async Task<IActionResult> UpdateAccount([FromBody] Account account) {
-        Account result = await this._AccountService.UpdateAccount(account);
-
-        return Ok(result);
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAccount([FromQuery] Guid id, [FromBody] AccountUpdateDTO accountToUpdate) {
+        try {
+            Account result = await this._AccountService.UpdateAccount(id,accountToUpdate);
+            return StatusCode(200, result);
+        }
+        catch (HttpException exception) {
+            int statusCode = exception.StatusCode;
+            return StatusCode(statusCode, exception.Message);
+        }
     }
 
     [HttpGet("search")]
     public async Task<IActionResult> SearchAccounts([FromBody] Account account) {
-        Account[] results = await this._AccountService.SearchAccounts(account);
-
-        return Ok(results);
+        try {
+            Account[] results = await this._AccountService.SearchAccounts(account);
+            return StatusCode(200, results);
+        }
+        catch (HttpException exception) {
+            int statusCode = exception.StatusCode;
+            return StatusCode(statusCode, exception.Message);
+        }
     }
-
 
     [HttpGet()]
     public async Task<IActionResult> GetAccountById([FromQuery] Guid accountId) {
-        Account result = await this._AccountService.GetAccountByID(accountId);
-
-        return Ok(result);
+        try {
+            Account result = await this._AccountService.GetAccountByID(accountId);
+            return StatusCode(200, result);
+        }
+        catch (HttpException exception) {
+            int statusCode = exception.StatusCode;
+            return StatusCode(statusCode, exception.Message);
+        }
     }
-    
 
     [HttpDelete()]
     public async Task<IActionResult> DeleteAccountById([FromQuery] Guid accountId) {
-        Account result = await this._AccountService.DeleteAccountById(accountId);
-
-        return Ok(result);
+        try {
+            Account result = await this._AccountService.DeleteAccountById(accountId);
+            return StatusCode(201, result);
+        }
+        catch (HttpException exception) {
+            int statusCode = exception.StatusCode;
+            return StatusCode(statusCode, exception.Message);
+        }
     }
-
 }
