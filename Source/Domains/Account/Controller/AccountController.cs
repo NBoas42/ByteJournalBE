@@ -22,9 +22,9 @@ public class AccountController : Controller {
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateAccount([FromQuery] Guid id, [FromBody] AccountUpdateDTO accountToUpdate) {
+    public async Task<IActionResult> UpdateAccount([FromRoute] Guid id, [FromBody] AccountUpdateDTO accountToUpdate) {
         try {
-            Account result = await this._AccountService.UpdateAccount(id,accountToUpdate);
+            Account result = await this._AccountService.UpdateAccount(id, accountToUpdate);
             return StatusCode(200, result);
         }
         catch (HttpException exception) {
@@ -33,8 +33,8 @@ public class AccountController : Controller {
         }
     }
 
-    [HttpGet("search")]
-    public async Task<IActionResult> SearchAccounts([FromBody] Account account) {
+    [HttpPost("search")]
+    public async Task<IActionResult> SearchAccounts([FromBody] AccountSearchDTO account) {
         try {
             Account[] results = await this._AccountService.SearchAccounts(account);
             return StatusCode(200, results);
@@ -45,10 +45,10 @@ public class AccountController : Controller {
         }
     }
 
-    [HttpGet()]
-    public async Task<IActionResult> GetAccountById([FromQuery] Guid accountId) {
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetAccountById([FromRoute]  Guid id) {
         try {
-            Account result = await this._AccountService.GetAccountByID(accountId);
+            Account result = await this._AccountService.GetAccountByID(id);
             return StatusCode(200, result);
         }
         catch (HttpException exception) {
@@ -58,7 +58,7 @@ public class AccountController : Controller {
     }
 
     [HttpDelete()]
-    public async Task<IActionResult> DeleteAccountById([FromQuery] Guid accountId) {
+    public async Task<IActionResult> DeleteAccountById([FromRoute] Guid accountId) {
         try {
             Account result = await this._AccountService.DeleteAccountById(accountId);
             return StatusCode(201, result);

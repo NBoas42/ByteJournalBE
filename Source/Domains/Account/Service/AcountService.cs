@@ -18,7 +18,7 @@ public class AccountService {
         return result;
     }
 
-    async public Task<Account[]> SearchAccounts(Account AccountQuery) {
+    async public Task<Account[]> SearchAccounts(AccountSearchDTO AccountQuery) {
         Account[] result = await this._AccountResource.SearchAccounts(AccountQuery);
         return result;
     }

@@ -1,10 +1,13 @@
 //Database Types
 using Npgsql;
 using Dapper;
-using DbExtensions.SqlBuilder
+using DbExtensions;
+
+
 public class AccountResource {
 
     NpgsqlConnection postgresClient;
+
     public AccountResource(PostgresClientProvider postgresClientProvider) {
         this.postgresClient = postgresClientProvider.getPostgresClient();
     }
@@ -20,34 +23,38 @@ public class AccountResource {
             parameters.Add("@Name", account.Name);
         }
 
-        if (account.Email != null){
+        if (account.Email != null) {
             insertColumns.Add("email");
             insertValues.Add("@Email");
             parameters.Add("@Email", account.Email);
         }
 
-        if (account.Password != null){
+        if (account.Password != null) {
             insertColumns.Add("password");
             insertValues.Add("@Password");
             parameters.Add("@Password", account.Password);
         }
 
-        if (account.Picture != null){
+        if (account.Picture != null) {
             insertColumns.Add("picture");
             insertValues.Add("@Picture");
             parameters.Add("@Picture", account.Picture);
         }
 
-        // Add Default Permission Type
+        // Default field
         insertColumns.Add("permission_type");
-        insertValues.Add("@permission_type");
-        parameters.Add("@permission_type", "USER");
+        insertValues.Add("@PermissionType");
+        parameters.Add("@PermissionType", "USER");
 
-        string sql = $"""
-        INSERT INTO account ({string.Join(", ", insertColumns)}) 
-        VALUES ({string.Join(", ", insertValues)}) 
-        RETURNING id, name, email, picture AS \"Picture\", created_at AS \"CreatedAt\", updated_at AS \"UpdatedAt\"
-        """;
+        // Use SqlBuilder here to assemble the full statement
+        SqlBuilder sqlBuilder = new SqlBuilder();
+        sqlBuilder.Append("INSERT INTO account");
+        sqlBuilder.Append($"({string.Join(", ", insertColumns)})");
+        sqlBuilder.Append("VALUES");
+        sqlBuilder.Append($"({string.Join(", ", insertValues)})");
+        sqlBuilder.Append("RETURNING id, name, email, picture AS \"Picture\", created_at AS \"CreatedAt\", updated_at AS \"UpdatedAt\"");
+
+        string sql = sqlBuilder.ToString();
 
         Account? result = await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
 
@@ -58,55 +65,96 @@ public class AccountResource {
         throw new HttpException("Account Resource Error", 500);
     }
 
-async public Task<Account> UpdateAccount(Guid accountId, AccountUpdateDTO account) {
-    SqlBuilder sqlBuilder = new SqlBuilder();
-    DynamicParameters parameters = new DynamicParameters();
+    public async Task<Account> UpdateAccount(Guid accountId, AccountUpdateDTO account) {
+        bool hasSetClause = false;
+        SqlBuilder sqlBuilder = new SqlBuilder();
+        DynamicParameters parameters = new DynamicParameters();
 
-    parameters.Add("@Id", accountId);
+        sqlBuilder.Append("UPDATE account SET ");
 
-    Template template = sqlBuilder.AddTemplate("UPDATE account SET /**set**/ WHERE id = @Id RETURNING *");
+        if (account.Name != null) {
+            sqlBuilder.Append(hasSetClause ? ", name = @Name " : "name = @Name ");
+            parameters.Add("@Name", account.Name);
+            hasSetClause = true;
+        }
 
-    if (account.Name != null) {
-        sqlBuilder.Set("name = @Name");
-        parameters.Add("@Name", account.Name);
+        if (account.Email != null) {
+            sqlBuilder.Append(hasSetClause ? ", email = @Email " : "email = @Email ");
+            parameters.Add("@Email", account.Email);
+            hasSetClause = true;
+        }
+
+        if (account.Picture != null) {
+            sqlBuilder.Append(hasSetClause ? ", picture = @Picture " : "picture = @Picture ");
+            parameters.Add("@Picture", account.Picture);
+            hasSetClause = true;
+        }
+
+        if (!hasSetClause) {
+            throw new HttpException("No fields provided to update", 400);
+        }
+
+        sqlBuilder.Append("WHERE id = @Id ");
+        parameters.Add("@Id", accountId);
+
+        sqlBuilder.Append("RETURNING * ");
+
+        string sql = sqlBuilder.ToString();
+
+        Console.WriteLine(sql); // Debug
+        Console.WriteLine(accountId);
+
+        Account result = await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
+
+        if (result != null) {
+            return result;
+        }
+
+        throw new HttpException("Account Resource Error", 500);
     }
 
-    if (account.Email != null) {
-        sqlBuilder.Set("email = @Email");
-        parameters.Add("@Email", account.Email);
-    }
+    async public Task<Account[]> SearchAccounts(AccountSearchDTO accountQuery) {
+        bool hasSetClause = false;
+        SqlBuilder sqlBuilder = new SqlBuilder();
+        DynamicParameters parameters = new DynamicParameters();
 
-    if (account.Picture != null) {
-        sqlBuilder.Set("picture = @Picture");
-        parameters.Add("@Picture", account.Picture);
-    }
+        sqlBuilder.Append("SELECT (id,name,email,picture,created_at as createdAt,updated_at as updatedAt) FROM account WHERE ");
 
-    if (!template.RawSql.Contains("SET")) {
-        throw new HttpException("No fields provided to update", 400);
-    }
+          if (accountQuery.Name != null) {
+            sqlBuilder.Append(hasSetClause ? ", name = @Name " : "name = @Name ");
+            parameters.Add("@Name", accountQuery.Name);
+            hasSetClause = true;
+        }
 
-    Account? result = await this.postgresClient.QuerySingleAsync<Account>(template.RawSql, parameters);
+        if (accountQuery.Email != null) {
+            sqlBuilder.Append(hasSetClause ? ", email = @Email " : "email = @Email ");
+            parameters.Add("@Email", accountQuery.Email);
+            hasSetClause = true;
+        }
 
-    if (result != null) {
-        return result;
-    }
+        if (parameters.ParameterNames.Count() < 1) {
+            throw new HttpException("No Parameters included in query",400);
+        }
 
-    throw new HttpException("Account Resource Error", 500);
-}
-
-    async public Task<Account[]> SearchAccounts(Account AccountQuery) {
-        Account[] result = (await this.postgresClient.QueryAsync<Account>("SELECT * FROM account")).ToArray();
-        return result;
+        string sql = sqlBuilder.ToString();
+        return (await this.postgresClient.QueryAsync<Account>(sql,parameters)).ToArray();
     }
 
     async public Task<Account> GetAccountByID(Guid accountId) {
-        Account[] result = (await this.postgresClient.QueryAsync<Account>($"SELECT * FROM account WHERE account.id = {accountId}")).ToArray();
-        return result[0];
+        DynamicParameters parameters = new DynamicParameters();
+        string sql = "SELECT id,name,email,picture,created_at AS createdAt,updated_at AS updatedAt FROM account WHERE account.id = @Id";
+        Console.WriteLine(accountId);
+
+        parameters.Add("@Id", accountId);
+        return await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
     }
-    
+
     async public Task<Account> DeleteAccountById(Guid accountId) {
-        Account[] result = (await this.postgresClient.QueryAsync<Account>($"DELETE FROM account WHERE account.id = {accountId}")).ToArray();
-        return result[0];
+        DynamicParameters parameters = new DynamicParameters();
+        string sql = "DELETE FROM account WHERE account.id = @Id";
+
+        parameters.Add("@Id", accountId);
+        return await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
     }
 
 }
