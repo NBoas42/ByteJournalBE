@@ -6,7 +6,7 @@ using DbExtensions;
 
 public class AccountResource {
 
-    NpgsqlConnection postgresClient;
+    private readonly NpgsqlConnection postgresClient;
 
     public AccountResource(PostgresClientProvider postgresClientProvider) {
         this.postgresClient = postgresClientProvider.getPostgresClient();
@@ -145,6 +145,16 @@ public class AccountResource {
         string sql = "SELECT id,name,email,picture,created_at AS createdAt,updated_at AS updatedAt FROM account WHERE account.id = @Id";
         Console.WriteLine(accountId);
 
+        parameters.Add("@Id", accountId);
+        return await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
+    }
+
+    async public Task<Account> UpdatePassword(Guid accountId, string password) {
+        DynamicParameters parameters = new DynamicParameters();
+        string sql = "UPDATE account SET password = @Password WHERE id = @Id";
+        Console.WriteLine(accountId);
+
+        parameters.Add("@Password", password);
         parameters.Add("@Id", accountId);
         return await this.postgresClient.QuerySingleAsync<Account>(sql, parameters);
     }
