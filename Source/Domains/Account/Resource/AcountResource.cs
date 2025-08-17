@@ -118,7 +118,7 @@ public class AccountResource {
         SqlBuilder sqlBuilder = new SqlBuilder();
         DynamicParameters parameters = new DynamicParameters();
 
-        sqlBuilder.Append("SELECT (id,name,email,picture,created_at as createdAt,updated_at as updatedAt) FROM account WHERE ");
+        sqlBuilder.Append("SELECT id,name,email,picture,created_at AS createdAt,updated_at AS updatedAt FROM account WHERE ");
 
           if (accountQuery.Name != null) {
             sqlBuilder.Append(hasSetClause ? ", name = @Name " : "name = @Name ");
